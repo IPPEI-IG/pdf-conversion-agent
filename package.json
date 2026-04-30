@@ -1,0 +1,10 @@
+{
+  "name": "pdf-conversion-agent",
+  "version": "1.0.0",
+  "description": "LibreOfficeを使ってOfficeドキュメントをPDFに変換するCLIエージェント",
+  "main": "pdf-agent.js",
+  "scripts": {
+    "start": "node pdf-agent.js"
+  },
+  "dependencies": {}
+}
