@@ -57,11 +57,33 @@ node src/cli.js help
 > `pdf2docx` は LibreOffice の PDF インポートに依存するため、PDFの作りによっては
 > 失敗します。テキスト主体のPDF向けです（高忠実度が必要なら今後の拡張で対応予定）。
 
+### フェーズ2：ページ操作（実装済み・検証済み）
+
+| コマンド | 内容 | 依存 | 状態 |
+|---|---|---|---|
+| `merge <a.pdf> <b.pdf>... [-o out.pdf]` | 複数PDFを結合 | 純JS | ✅ 検証済み |
+| `split <in.pdf> [-o outdir] [--every N]` | ページ毎に分割（既定）/ Nページ毎 | 純JS | ✅ 検証済み |
+| `extract <in.pdf> <pages> [-o out.pdf]` | 指定ページを抽出（例: `1,3,5-7`） | 純JS | ✅ 検証済み |
+| `delete <in.pdf> <pages> [-o out.pdf]` | 指定ページを削除 | 純JS | ✅ 検証済み |
+| `reorder <in.pdf> <order> [-o out.pdf]` | 並べ替え（例: `3,1,2`） | 純JS | ✅ 検証済み |
+| `rotate <in.pdf> <deg> [pages] [-o out.pdf]` | 回転 90/180/270（省略時全ページ） | 純JS | ✅ 検証済み |
+
+ページ指定 `<pages>` は `1,3,5-7` のようにカンマ・範囲で記述します（`all` で全ページ、`5-1` で降順も可）。
+
 ### 使用例
 
 ```bash
 # スキャン画像をまとめて1つのPDFに
 node src/cli.js img2pdf scan1.png scan2.png scan3.jpg -o 契約書.pdf
+
+# 表紙・本文・裏表紙を結合
+node src/cli.js merge 表紙.pdf 本文.pdf 裏表紙.pdf -o 完成.pdf
+
+# 1,3,5〜7ページだけ抜き出す
+node src/cli.js extract report.pdf 1,3,5-7 -o 抜粋.pdf
+
+# 2,4ページだけ90°回転
+node src/cli.js rotate scan.pdf 90 2,4
 
 # PDFを200dpiでページ毎のPNGに
 node src/cli.js pdf2img report.pdf --dpi 200 -o ./pages
@@ -77,7 +99,8 @@ node src/cli.js pdf2txt 契約書.pdf -o 契約書.txt
 
 ## ロードマップ
 
-- **フェーズ2：ページ操作** — `merge`（結合）/ `split`（分割）/ `extract`（抽出）/ `rotate`（回転）/ `delete`（ページ削除）/ `reorder`（並べ替え）
+- ~~**フェーズ1：変換**~~ ✅ 実装済み
+- ~~**フェーズ2：ページ操作**~~ ✅ 実装済み
 - **フェーズ3：保護** — `encrypt`（パスワード設定）/ `decrypt`（解除）/ `watermark`（透かし）/ ページ番号付与
 - **フェーズ4：その他** — `compress`（圧縮）/ `ocr`（スキャンPDFの文字認識）など
 
@@ -91,10 +114,13 @@ src/
 ├── util/
 │   ├── args.js           引数パーサ
 │   ├── log.js            ログ出力
+│   ├── pages.js          ページ指定パーサ
 │   └── external.js       LibreOffice検出・子プロセス実行
-└── convert/              フェーズ1：変換
-    ├── imagesToPdf.js
-    ├── pdfToImages.js
-    ├── pdfToText.js
-    └── office.js
+├── convert/              フェーズ1：変換
+│   ├── imagesToPdf.js
+│   ├── pdfToImages.js
+│   ├── pdfToText.js
+│   └── office.js
+└── pages/                フェーズ2：ページ操作
+    └── pageOps.js
 ```
