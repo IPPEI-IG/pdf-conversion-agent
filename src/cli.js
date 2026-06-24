@@ -16,6 +16,7 @@ import { pdfToImages } from './convert/pdfToImages.js';
 import { pdfToText } from './convert/pdfToText.js';
 import { officeToPdf, pdfToDocx } from './convert/office.js';
 import { merge, split, extract, deletePages, reorder, rotate } from './pages/pageOps.js';
+import { encrypt, decrypt, watermark, pageNumbers } from './protect/protect.js';
 
 const HELP = `
 P子 (pko) — PDF加工エージェント
@@ -38,14 +39,20 @@ P子 (pko) — PDF加工エージェント
   reorder <in.pdf> <order>  [-o out.pdf]         並べ替え  例: 3,1,2
   rotate  <in.pdf> <deg> [pages] [-o out.pdf]    回転 90/180/270（省略時全ページ）
 
+【保護】(フェーズ3・実装済み)
+  encrypt   <in.pdf> --password <pw> [--owner <pw>] [-o out.pdf]  パスワード設定
+  decrypt   <in.pdf> --password <pw> [-o out.pdf]                 パスワード解除
+  watermark <in.pdf> <text> [--opacity 0.3] [--size 48] [-o out]  透かし(ASCII)
+  pagenum   <in.pdf> [--start 1] [--size 10] [-o out.pdf]         ページ番号付与
+
   help                                           このヘルプ
 
 例:
   pko img2pdf scan1.png scan2.png -o doc.pdf
-  pko pdf2img report.pdf --dpi 200
   pko merge 表紙.pdf 本文.pdf 裏表紙.pdf -o 完成.pdf
   pko extract report.pdf 1,3,5-7 -o 抜粋.pdf
-  pko rotate scan.pdf 90 2,4
+  pko encrypt 機密.pdf --password himitsu
+  pko watermark draft.pdf CONFIDENTIAL --opacity 0.2
 `;
 
 async function main() {
@@ -96,6 +103,22 @@ async function main() {
       case 'rotate':
         requireTwo(inputs, 'rotate', '<deg>（90/180/270）');
         await rotate(inputs[0], inputs[1], inputs[2], args.out);
+        break;
+      case 'encrypt':
+        requireOne(inputs, 'encrypt');
+        encrypt(inputs[0], { password: args.password, owner: args.owner, outPath: args.out });
+        break;
+      case 'decrypt':
+        requireOne(inputs, 'decrypt');
+        decrypt(inputs[0], { password: args.password, outPath: args.out });
+        break;
+      case 'watermark':
+        requireTwo(inputs, 'watermark', '<text>（透かし文字）');
+        await watermark(inputs[0], inputs[1], { opacity: args.opacity, size: args.size, outPath: args.out });
+        break;
+      case 'pagenum':
+        requireOne(inputs, 'pagenum');
+        await pageNumbers(inputs[0], { start: args.start ?? 1, size: args.size ?? 10, outPath: args.out });
         break;
       case 'help':
       case '--help':

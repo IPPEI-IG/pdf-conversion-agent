@@ -70,6 +70,19 @@ node src/cli.js help
 
 ページ指定 `<pages>` は `1,3,5-7` のようにカンマ・範囲で記述します（`all` で全ページ、`5-1` で降順も可）。
 
+### フェーズ3：保護（実装済み・検証済み）
+
+| コマンド | 内容 | 依存 | 状態 |
+|---|---|---|---|
+| `encrypt <in.pdf> --password <pw> [--owner <pw>]` | パスワードを設定して暗号化 | muhammara | ✅ 検証済み |
+| `decrypt <in.pdf> --password <pw>` | パスワードを解除 | muhammara | ✅ 検証済み |
+| `watermark <in.pdf> <text> [--opacity 0.3] [--size 48]` | 斜めの透かしを全ページに | 純JS | ✅ 検証済み |
+| `pagenum <in.pdf> [--start 1] [--size 10]` | ページ番号（`n / total`）を付与 | 純JS | ✅ 検証済み |
+
+> **注意**: `watermark` / `pagenum` の文字は標準フォント（**ASCII/英数字**）です。
+> 日本語など非ASCIIの透かしはフォント埋め込みが必要で、現状未対応です（今後対応予定）。
+> `decrypt` は誤ったパスワードの場合は明確にエラーを返します。
+
 ### 使用例
 
 ```bash
@@ -93,6 +106,14 @@ node src/cli.js office2pdf 見積書.xlsx
 
 # PDFから本文テキストを抽出
 node src/cli.js pdf2txt 契約書.pdf -o 契約書.txt
+
+# パスワードを設定 / 解除
+node src/cli.js encrypt 機密.pdf --password himitsu
+node src/cli.js decrypt 機密_encrypted.pdf --password himitsu
+
+# 透かし・ページ番号
+node src/cli.js watermark draft.pdf CONFIDENTIAL --opacity 0.2
+node src/cli.js pagenum report.pdf
 ```
 
 ---
@@ -101,8 +122,8 @@ node src/cli.js pdf2txt 契約書.pdf -o 契約書.txt
 
 - ~~**フェーズ1：変換**~~ ✅ 実装済み
 - ~~**フェーズ2：ページ操作**~~ ✅ 実装済み
-- **フェーズ3：保護** — `encrypt`（パスワード設定）/ `decrypt`（解除）/ `watermark`（透かし）/ ページ番号付与
-- **フェーズ4：その他** — `compress`（圧縮）/ `ocr`（スキャンPDFの文字認識）など
+- ~~**フェーズ3：保護**~~ ✅ 実装済み
+- **フェーズ4：その他** — `compress`（圧縮）/ `ocr`（スキャンPDFの文字認識）/ 透かしの日本語対応 など
 
 ---
 
@@ -121,6 +142,8 @@ src/
 │   ├── pdfToImages.js
 │   ├── pdfToText.js
 │   └── office.js
-└── pages/                フェーズ2：ページ操作
-    └── pageOps.js
+├── pages/                フェーズ2：ページ操作
+│   └── pageOps.js
+└── protect/              フェーズ3：保護
+    └── protect.js
 ```
