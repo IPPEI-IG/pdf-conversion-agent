@@ -1,13 +1,13 @@
 // フェーズ3：保護
 //  - encrypt / decrypt : muhammara（パスワード設定・解除）
 //  - watermark / pagenum : pdf-lib（純JS）
-// 注意: watermark / pagenum のテキストは標準フォント（ASCII）です。
-//       日本語など非ASCIIは現状未対応（フォント埋め込みは今後対応）。
+// watermark / pagenum は日本語にも対応（--font 指定 or OS既定の日本語フォントを自動埋め込み）。
 import { readFile, writeFile } from 'node:fs/promises';
-import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
+import { PDFDocument, degrees, rgb } from 'pdf-lib';
 import muhammara from 'muhammara';
 import { log } from '../util/log.js';
 import { defaultOut } from '../util/pages.js';
+import { resolveTextFont } from '../util/font.js';
 
 const { createWriter } = muhammara;
 
@@ -41,14 +41,11 @@ export function decrypt(inPath, { password, outPath } = {}) {
   return dest;
 }
 
-// 全ページに斜めの透かしテキストを重ねる（ASCII）
-export async function watermark(inPath, text, { opacity = 0.3, size = 48, outPath } = {}) {
-  if (!text) throw new Error('watermark: 透かし文字を指定してください（ASCII）');
-  if (/[^\x00-\x7F]/.test(text)) {
-    log.warn('非ASCII文字は標準フォントで表示できません。英数字でお試しください。');
-  }
+// 全ページに斜めの透かしテキストを重ねる（日本語可）
+export async function watermark(inPath, text, { opacity = 0.3, size = 48, outPath, font: fontPath } = {}) {
+  if (!text) throw new Error('watermark: 透かし文字を指定してください');
   const pdf = await PDFDocument.load(await readFile(inPath));
-  const font = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const font = await resolveTextFont(pdf, { text, fontPath, bold: true });
   const op = Math.min(1, Math.max(0, Number(opacity)));
   const sz = Number(size);
 
@@ -73,10 +70,10 @@ export async function watermark(inPath, text, { opacity = 0.3, size = 48, outPat
 }
 
 // 全ページにページ番号を付与（既定: 下中央 "n / total"）
-export async function pageNumbers(inPath, { start = 1, size = 10, outPath } = {}) {
+export async function pageNumbers(inPath, { start = 1, size = 10, outPath, font: fontPath } = {}) {
   const pdf = await PDFDocument.load(await readFile(inPath));
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
   const total = pdf.getPageCount();
+  const font = await resolveTextFont(pdf, { text: '0123456789 /', fontPath });
   const sz = Number(size);
   const startNum = Number(start);
 

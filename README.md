@@ -79,9 +79,23 @@ node src/cli.js help
 | `watermark <in.pdf> <text> [--opacity 0.3] [--size 48]` | 斜めの透かしを全ページに | 純JS | ✅ 検証済み |
 | `pagenum <in.pdf> [--start 1] [--size 10]` | ページ番号（`n / total`）を付与 | 純JS | ✅ 検証済み |
 
-> **注意**: `watermark` / `pagenum` の文字は標準フォント（**ASCII/英数字**）です。
-> 日本語など非ASCIIの透かしはフォント埋め込みが必要で、現状未対応です（今後対応予定）。
+> **日本語対応**: `watermark` / `pagenum` は日本語にも対応しました。非ASCII文字を含む場合、
+> `--font` で指定した TTF/OTF、なければOS既定の日本語フォントを自動検出して埋め込みます
+> （サブセット埋め込みでファイルは肥大化しません）。
+> Windowsで自動検出に失敗する場合は `--font C:\Windows\Fonts\YuGothR.ttc` のように指定してください。
 > `decrypt` は誤ったパスワードの場合は明確にエラーを返します。
+
+### フェーズ4：その他
+
+| コマンド | 内容 | 依存 | 状態 |
+|---|---|---|---|
+| `compress <in.pdf> [--level low\|medium\|high]` | PDFを圧縮（既定 medium） | Ghostscript | ⚠ 要Ghostscript実機 |
+
+> **注意（compress）**: Ghostscript が必要です（Windows: 公式サイトからインストール）。
+> 開発サンドボックスにGhostscriptが無いため未検証ですが、標準的な `-sDEVICE=pdfwrite` 方式で、
+> 未インストール時は導入を促すエラーを返します。圧縮後はファイルサイズの削減率を表示します。
+>
+> OCR（スキャンPDFの文字認識）は外部エンジン（Tesseract等）が必要なため、今後の対応予定です。
 
 ### 使用例
 
@@ -111,9 +125,13 @@ node src/cli.js pdf2txt 契約書.pdf -o 契約書.txt
 node src/cli.js encrypt 機密.pdf --password himitsu
 node src/cli.js decrypt 機密_encrypted.pdf --password himitsu
 
-# 透かし・ページ番号
+# 透かし・ページ番号（日本語可）
 node src/cli.js watermark draft.pdf CONFIDENTIAL --opacity 0.2
+node src/cli.js watermark 契約書.pdf 社外秘
 node src/cli.js pagenum report.pdf
+
+# 圧縮（要Ghostscript）
+node src/cli.js compress 大きい.pdf --level medium
 ```
 
 ---
@@ -123,7 +141,7 @@ node src/cli.js pagenum report.pdf
 - ~~**フェーズ1：変換**~~ ✅ 実装済み
 - ~~**フェーズ2：ページ操作**~~ ✅ 実装済み
 - ~~**フェーズ3：保護**~~ ✅ 実装済み
-- **フェーズ4：その他** — `compress`（圧縮）/ `ocr`（スキャンPDFの文字認識）/ 透かしの日本語対応 など
+- **フェーズ4：その他** — ✅ 透かしの日本語対応 / ✅ `compress`（圧縮, 要Ghostscript） / ⏳ `ocr`（スキャンPDFの文字認識, 要Tesseract）
 
 ---
 
@@ -136,7 +154,8 @@ src/
 │   ├── args.js           引数パーサ
 │   ├── log.js            ログ出力
 │   ├── pages.js          ページ指定パーサ
-│   └── external.js       LibreOffice検出・子プロセス実行
+│   ├── font.js           フォント解決（日本語埋め込み）
+│   └── external.js       LibreOffice/Ghostscript検出・子プロセス実行
 ├── convert/              フェーズ1：変換
 │   ├── imagesToPdf.js
 │   ├── pdfToImages.js
@@ -144,6 +163,8 @@ src/
 │   └── office.js
 ├── pages/                フェーズ2：ページ操作
 │   └── pageOps.js
-└── protect/              フェーズ3：保護
-    └── protect.js
+├── protect/              フェーズ3：保護
+│   └── protect.js
+└── other/                フェーズ4：その他
+    └── compress.js
 ```

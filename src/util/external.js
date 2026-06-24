@@ -22,6 +22,18 @@ export function findSoffice() {
   return isWin ? 'soffice.exe' : 'soffice';
 }
 
+// Ghostscript (gs / gswin64c) の実行パスを探す。
+export function findGhostscript() {
+  const isWin = process.platform === 'win32';
+  const candidates = isWin
+    ? ['gswin64c.exe', 'gswin32c.exe']
+    : ['/usr/bin/gs', '/usr/local/bin/gs'];
+  for (const c of candidates) {
+    if (!isWin && existsSync(c)) return c;
+  }
+  return isWin ? 'gswin64c.exe' : 'gs';
+}
+
 // 子プロセスを起動して終了を待つ。stdout/stderr を収集して返す。
 export function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {

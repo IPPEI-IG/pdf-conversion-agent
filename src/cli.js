@@ -17,6 +17,7 @@ import { pdfToText } from './convert/pdfToText.js';
 import { officeToPdf, pdfToDocx } from './convert/office.js';
 import { merge, split, extract, deletePages, reorder, rotate } from './pages/pageOps.js';
 import { encrypt, decrypt, watermark, pageNumbers } from './protect/protect.js';
+import { compress } from './other/compress.js';
 
 const HELP = `
 P子 (pko) — PDF加工エージェント
@@ -42,8 +43,11 @@ P子 (pko) — PDF加工エージェント
 【保護】(フェーズ3・実装済み)
   encrypt   <in.pdf> --password <pw> [--owner <pw>] [-o out.pdf]  パスワード設定
   decrypt   <in.pdf> --password <pw> [-o out.pdf]                 パスワード解除
-  watermark <in.pdf> <text> [--opacity 0.3] [--size 48] [-o out]  透かし(ASCII)
-  pagenum   <in.pdf> [--start 1] [--size 10] [-o out.pdf]         ページ番号付与
+  watermark <in.pdf> <text> [--opacity 0.3] [--size 48] [--font f] [-o out]  透かし(日本語可)
+  pagenum   <in.pdf> [--start 1] [--size 10] [--font f] [-o out.pdf]         ページ番号付与
+
+【その他】(フェーズ4)
+  compress  <in.pdf> [--level low|medium|high] [-o out.pdf]  圧縮(要Ghostscript)
 
   help                                           このヘルプ
 
@@ -114,11 +118,15 @@ async function main() {
         break;
       case 'watermark':
         requireTwo(inputs, 'watermark', '<text>（透かし文字）');
-        await watermark(inputs[0], inputs[1], { opacity: args.opacity, size: args.size, outPath: args.out });
+        await watermark(inputs[0], inputs[1], { opacity: args.opacity, size: args.size, outPath: args.out, font: args.font });
         break;
       case 'pagenum':
         requireOne(inputs, 'pagenum');
-        await pageNumbers(inputs[0], { start: args.start ?? 1, size: args.size ?? 10, outPath: args.out });
+        await pageNumbers(inputs[0], { start: args.start ?? 1, size: args.size ?? 10, outPath: args.out, font: args.font });
+        break;
+      case 'compress':
+        requireOne(inputs, 'compress');
+        await compress(inputs[0], { level: args.level ?? 'medium', outPath: args.out });
         break;
       case 'help':
       case '--help':
