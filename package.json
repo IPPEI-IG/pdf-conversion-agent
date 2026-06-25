@@ -1,0 +1,19 @@
+{
+  "name": "pdf-conversion-agent",
+  "version": "0.1.0",
+  "description": "P子 — PDF加工エージェント（iLovePDF / Adobe Acrobat 相当の機能をローカルで実行）",
+  "type": "module",
+  "bin": {
+    "pko": "src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "muhammara": "^6.0.5",
+    "pdf-lib": "^1.17.1",
+    "pdf-to-img": "^4.5.0"
+  }
+}

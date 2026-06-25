@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.DS_Store
+# 変換の出力物（誤コミット防止）
+output.pdf
+*_images/
